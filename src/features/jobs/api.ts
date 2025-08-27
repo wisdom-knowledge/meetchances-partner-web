@@ -3,6 +3,24 @@ import { api } from '@/lib/api'
 import type { Job } from '@/types/solutions'
 import { JobType } from '@/constants/explore'
 
+export enum InviteTokenType {
+  HeadhunterRecommend = 1,
+}
+
+export interface GenerateInviteTokenPayload {
+  job_id: string | number
+  headhunter_id: string | number
+  token_type: InviteTokenType
+}
+
+export async function generateInviteToken(payload: GenerateInviteTokenPayload): Promise<string | null> {
+  const res = (await api.post('/jobs/gen_invite_token', payload)) 
+
+  if (typeof res === 'string') return res
+  const token = (res as { invite_token?: string })?.invite_token
+  return token ?? null
+}
+
 export interface JobsListParams {
   skip?: number
   limit?: number

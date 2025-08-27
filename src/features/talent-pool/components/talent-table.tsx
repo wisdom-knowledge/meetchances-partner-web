@@ -23,6 +23,10 @@ import TalentResumePreview from './talent-resume-preview'
 import type { StructInfo } from '@/types/struct-info'
 import type { ResumeFormValues } from '@/features/resume/data/schema'
 import { fetchResumeDetail } from '@/features/resume-upload/utils/api'
+import { toast } from 'sonner'
+import { generateInviteToken, InviteTokenType } from '@/features/jobs/api'
+import { useAuthStore } from '@/stores/authStore'
+import { useRouterState } from '@tanstack/react-router'
 
 export interface TalentItem {
   resume_id?: number
@@ -61,11 +65,17 @@ export interface TalentTableProps {
   mode?: 'talentPool' | 'jobRecommend'
   inviteContext?: InviteContextLike
 }
-export default function TalentTable({ data, onFilterChange, mode = 'talentPool', inviteContext: _inviteContext }: TalentTableProps) {
+export default function TalentTable({ data, onFilterChange, mode = 'talentPool', inviteContext }: TalentTableProps) {
   const [resumeOpen, setResumeOpen] = useState(false)
+  const [isCopying, setIsCopying] = useState(false)
   const [current, setCurrent] = useState<TalentItem | null>(null)
   const [resumeValues, setResumeValues] = useState<ResumeFormValues | null>(null)
   // const mergedInviteContext = useMemo(() => ({ link: 'https://talent.meetchances.com/', ...(inviteContext ?? {}) }), [inviteContext])
+
+  const user = useAuthStore((s) => s.auth.user)
+  const { location } = useRouterState()
+
+  const link = inviteContext?.link ?? 'https://talent.meetchances.com/job-detail'
 
   const mapStructInfoToResumeValues = useCallback((struct: StructInfo | undefined, fallbackName?: string): ResumeFormValues => {
     const basic = struct?.basic_info ?? {}
@@ -168,7 +178,12 @@ export default function TalentTable({ data, onFilterChange, mode = 'talentPool',
     setResumeValues(values)
   }, [mapStructInfoToResumeValues])
 
-  
+  const jobId = useMemo(() => {
+    const v = (location.search as Record<string, string>)?.job_id
+    if (typeof v === 'string') return Number.isNaN(Number(v)) ? v : Number(v)
+    if (typeof v === 'number') return v
+    return null
+  }, [location.search])
 
   const columns: ColumnDef<TalentItem>[] = useMemo(() => {
     const nameCol: ColumnDef<TalentItem> = {
@@ -280,6 +295,69 @@ export default function TalentTable({ data, onFilterChange, mode = 'talentPool',
     getFacetedUniqueValues: getFacetedUniqueValues(),
   })
 
+  const headhunterName = useMemo(() => {
+    if (inviteContext?.headhunterName) return inviteContext.headhunterName
+    if (user?.accountNo && user.accountNo.trim()) return user.accountNo
+    if (user?.email) return user.email.split('@')[0]
+    return '猎头'
+  }, [inviteContext?.headhunterName, user?.accountNo, user?.email])
+
+  const handleCopyInvite = async () => {
+    if (!jobId) {
+      toast.error('缺少职位ID，无法生成邀请令牌')
+      return
+    }
+    if (!user?.id) {
+      toast.error('未登录或缺少用户ID，无法生成邀请令牌')
+      return
+    }
+
+    setIsCopying(true)
+    try {
+      const inviteToken = await generateInviteToken({
+        job_id: jobId,
+        headhunter_id: user.id,
+        token_type: InviteTokenType.HeadhunterRecommend,
+      })
+      if (!inviteToken) {
+        toast.error('生成邀请令牌失败')
+        return
+      }
+
+      let finalLink = link
+      try {
+        const url = new URL(link)
+        url.searchParams.set('invite_token', inviteToken)
+        finalLink = url.toString()
+      } catch {
+        const sep = link.includes('?') ? '&' : '?'
+        finalLink = `${link}${sep}invite_token=${encodeURIComponent(inviteToken)}`
+      }
+
+      const x = inviteContext?.salaryMin != null ? String(inviteContext?.salaryMin) : ''
+      const y = inviteContext?.salaryMax != null ? String(inviteContext?.salaryMax) : ''
+      const text = `${headhunterName}邀请你参加${inviteContext?.jobTitle}面试！时薪${x}～${y}元。在桌面端打开链接 ${finalLink} 参与吧！`
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text)
+      } else {
+        const ta = document.createElement('textarea')
+        ta.value = text
+        ta.style.position = 'fixed'
+        ta.style.opacity = '0'
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+      }
+      toast.success('复制成功')
+    } catch {
+      toast.error('操作失败，请稍后重试')
+    } finally {
+      setIsCopying(false)
+    }
+  }
+
   // 将表格筛选项映射为服务端过滤参数并上抛
   useEffect(() => {
     if (!onFilterChange) return
@@ -357,7 +435,16 @@ export default function TalentTable({ data, onFilterChange, mode = 'talentPool',
           {resumeValues && (
             <TalentResumePreview
               values={resumeValues}
-              footer={<Button onClick={() => setResumeOpen(false)}>关闭</Button>}
+              footer={
+                <button
+                  type='button'
+                  onClick={handleCopyInvite}
+                  className='inline-flex items-center rounded-md bg-primary px-4 py-2 text-primary-foreground text-sm font-medium shadow hover:opacity-90 disabled:opacity-60'
+                  disabled={isCopying}
+                >
+                  {isCopying ? '复制中…' : '复制邀请文案'}
+                </button>
+              }
             />
           )}
         </SheetContent>
