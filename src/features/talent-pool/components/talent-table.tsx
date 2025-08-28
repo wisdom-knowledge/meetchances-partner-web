@@ -22,7 +22,7 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import TalentResumePreview from './talent-resume-preview'
 import type { StructInfo } from '@/types/struct-info'
 import type { ResumeFormValues } from '@/features/resume/data/schema'
-import { fetchResumeDetail } from '@/features/resume-upload/utils/api'
+import { fetchResumeDetail, updateResumeDetail } from '@/features/resume-upload/utils/api'
 import { toast } from 'sonner'
 import { generateInviteToken, InviteTokenType } from '@/features/jobs/api'
 import { useAuthStore } from '@/stores/authStore'
@@ -70,6 +70,7 @@ export default function TalentTable({ data, onFilterChange, mode = 'talentPool',
   const [isCopying, setIsCopying] = useState(false)
   const [current, setCurrent] = useState<TalentItem | null>(null)
   const [resumeValues, setResumeValues] = useState<ResumeFormValues | null>(null)
+  const [editedStruct, setEditedStruct] = useState<StructInfo | null>(null)
   // const mergedInviteContext = useMemo(() => ({ link: 'https://talent.meetchances.com/', ...(inviteContext ?? {}) }), [inviteContext])
 
   const user = useAuthStore((s) => s.auth.user)
@@ -151,6 +152,7 @@ export default function TalentTable({ data, onFilterChange, mode = 'talentPool',
   const handlePreview = useCallback(async (item: TalentItem) => {
     setCurrent(item)
     setResumeOpen(true)
+    setEditedStruct(null)
     if (!item.resume_id) {
       setResumeValues({
         name: item.name,
@@ -435,15 +437,30 @@ export default function TalentTable({ data, onFilterChange, mode = 'talentPool',
           {resumeValues && (
             <TalentResumePreview
               values={resumeValues}
+              onStructChange={(s) => setEditedStruct(s)}
               footer={
-                <button
-                  type='button'
-                  onClick={handleCopyInvite}
-                  className='inline-flex items-center rounded-md bg-primary px-4 py-2 text-primary-foreground text-sm font-medium shadow hover:opacity-90 disabled:opacity-60'
-                  disabled={isCopying}
-                >
-                  {isCopying ? '复制中…' : '复制邀请文案'}
-                </button>
+                <div className='flex gap-2 justify-start'>
+                  <Button variant='outline' onClick={() => setResumeOpen(false)}>关闭</Button>
+                  <Button onClick={async () => {
+                    const resumeId = current?.resume_id
+                    if (!resumeId) {
+                      toast.error('缺少简历ID，无法提交')
+                      return
+                    }
+                    const payload = editedStruct ?? ({} as StructInfo)
+                    const ok = await updateResumeDetail(resumeId, payload)
+                    if (ok.success) {
+                      toast.success('已提交保存')
+                      setResumeOpen(false)
+                      setResumeValues(null)
+                    } else {
+                      toast.error('提交失败')
+                    }
+                  }}>提交</Button>
+                  <Button onClick={handleCopyInvite} disabled={isCopying}>
+                    {isCopying ? '复制中…' : '复制邀请文案'}
+                  </Button>
+                </div>
               }
             />
           )}
