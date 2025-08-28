@@ -77,7 +77,6 @@ export default function DynamicBasicForm(props: Props) {
                         placeholder={field.placeholder ?? ''}
                         tags={parseTags(rhfField.value).map((text, idx) => ({ id: `${idx}`, text })) as Tag[]}
                         setTags={(updater) => {
-                          if (readOnly) return
                           const nextTags = typeof updater === 'function' ? (updater as (prev: Tag[]) => Tag[])(parseTags(rhfField.value).map((t, i) => ({ id: `${i}`, text: t }))) : (updater as Tag[])
                           const nextTexts = nextTags.map((t) => t.text).filter(Boolean)
                           rhfField.onChange(nextTexts.join('、'))
