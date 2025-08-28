@@ -29,7 +29,7 @@ export interface FileItem {
 
 export default function ResumeUploadPage() {
   const [items, setItems] = useState<FileItem[]>([])
-  const [tab, setTab] = useState<'running' | 'failed' | 'success'>('success')
+  const [tab, setTab] = useState<'running' | 'failed' | 'success'>('running')
   const [pageSize, setPageSize] = useState(10)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
@@ -180,10 +180,13 @@ export default function ResumeUploadPage() {
       let failedCount = counts.failed
       let successCount = counts.success
 
-      // 当前 tab 的计数直接使用 res.count，其他两个 tab 发起轻量计数请求
-      if (currentTab === 'running') runningCount = res.count
-      if (currentTab === 'failed') failedCount = res.count
-      if (currentTab === 'success') successCount = res.count
+      // running 与 success 可以复用当前接口返回的 count，减少请求
+      if (currentTab === 'running') {
+        runningCount = res.count
+      }
+      if (currentTab === 'success') {
+        successCount = res.count
+      }
 
       const promises: Promise<void>[] = []
       if (currentTab !== 'running') {
@@ -191,11 +194,6 @@ export default function ResumeUploadPage() {
           getCount(BackendStatus.InProgress).then((c) => {
             runningCount = c
           })
-        )
-      }
-      if (currentTab !== 'failed') {
-        promises.push(
-          getCount(BackendStatus.Failed).then((c) => { failedCount = c })
         )
       }
       if (currentTab !== 'success') {
@@ -206,7 +204,28 @@ export default function ResumeUploadPage() {
         )
       }
 
-      await Promise.all(promises)
+      // 失败需要聚合（20/30/31）
+      if (currentTab === 'failed') {
+        // res.count 仅代表 Failed(20)，仍需补齐另外两种失败状态
+        let parseFailed = 0
+        let importMissing = 0
+        await Promise.all([
+          getCount(BackendStatus.ParseFailed).then((c) => { parseFailed = c }),
+          getCount(BackendStatus.ImportMissingInfo).then((c) => { importMissing = c }),
+        ])
+        failedCount = res.count + parseFailed + importMissing
+      } else {
+        let failed = 0
+        let parseFailed = 0
+        let importMissing = 0
+        await Promise.all([
+          getCount(BackendStatus.Failed).then((c) => { failed = c }),
+          getCount(BackendStatus.ParseFailed).then((c) => { parseFailed = c }),
+          getCount(BackendStatus.ImportMissingInfo).then((c) => { importMissing = c }),
+        ])
+        failedCount = failed + parseFailed + importMissing
+      }
+
       setCounts({ running: runningCount, failed: failedCount, success: successCount })
     }
   }
@@ -232,7 +251,8 @@ export default function ResumeUploadPage() {
       if (isPollingRef.current) return
       isPollingRef.current = true
       try {
-        await handleRefresh()
+        // 轮询也刷新计数，确保 Tab 数字实时更新
+        await handleRefresh({ refreshCounts: true })
       } finally {
         isPollingRef.current = false
       }
