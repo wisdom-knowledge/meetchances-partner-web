@@ -49,8 +49,7 @@ export function UploadArea({ onUploadComplete }: UploadAreaProps) {
         // 后端已经返回了正确格式的 UploadResult[]
         const results: UploadResult[] = response.data
 
-        const successCount = results.filter((r) => r.success).length
-        toast.success(`成功上传 ${successCount} 个文件`)
+        toast.success(`文件已上传，正在解析中...`)
         onUploadComplete?.(results)
       } else {
         toast.error('上传失败')

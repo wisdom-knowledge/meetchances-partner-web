@@ -57,7 +57,7 @@ export function SelectDropdown({
             variant='outline'
             role='combobox'
             disabled={disabled}
-            className={cn('justify-between', className)}
+            className={cn('justify-between', !selectedLabel && 'text-muted-foreground', className)}
           >
             {selectedLabel ?? placeholder ?? 'Select'}
             <CaretSortIcon className='ml-2 h-4 w-4 shrink-0 opacity-50' />

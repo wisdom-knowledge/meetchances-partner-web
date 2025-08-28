@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { UploadCardStatusCode } from '@/features/resume-upload/types'
 import { uploadFiles } from '@/features/resume-upload/utils/api'
+import { toast } from 'sonner'
 
 export type UploadStatusCode = `${UploadCardStatusCode}`
 
@@ -87,6 +88,7 @@ export default function UploadCard({
     try {
       const res = await uploadFiles(formData)
       if (res.success) {
+        toast.success('文件已上传，正在解析中...')
         onRetryUpload?.()
       }
     } catch {
@@ -96,7 +98,7 @@ export default function UploadCard({
     }
   }
 
-  function 异常处理() {
+  function handleRetryButtonClick() {
     const label = getRetryButtonLabel(status_code, errorMsg)
     if (label === '重新上传') {
       fileInputRef.current?.click()
@@ -165,7 +167,7 @@ export default function UploadCard({
                 onChange={handleFilesSelected}
                 aria-label="重新上传文件"
               />
-              <Button size="sm" variant="secondary" onClick={异常处理}>
+              <Button size="sm" variant="secondary" onClick={handleRetryButtonClick}>
                 {getRetryButtonLabel(status_code, errorMsg)}
               </Button>
             </>
@@ -182,23 +184,24 @@ function UploadingTicker({ minutes = 5 }: { minutes?: number }) {
 
   useEffect(() => {
     let isActive = true
+    let rafId = 0
     async function loop() {
       while (isActive) {
-        // 先设置初始位置，避免在挂载前调用 start
         controls.set({ y: 0 })
-        // 显示第1行 3s
         await new Promise((r) => setTimeout(r, 3000))
-        // 向上翻到第2行（0.5s）并停留 3s
         await controls.start({ y: -20, transition: { duration: 0.5, ease: 'easeInOut' } })
         await new Promise((r) => setTimeout(r, 3000))
-        // 向上翻到第3行（复制的第1行），并复位
         await controls.start({ y: -40, transition: { duration: 0.5, ease: 'easeInOut' } })
         controls.set({ y: 0 })
       }
     }
-    void loop()
+    // 确保在组件挂载后的下一帧再启动动画
+    rafId = requestAnimationFrame(() => {
+      void loop()
+    })
     return () => {
       isActive = false
+      cancelAnimationFrame(rafId)
     }
   }, [controls])
 
