@@ -15,7 +15,7 @@ export const Route = createRootRouteWithContext<{
       <>
         <NavigationProgress />
         <Outlet />
-        <Toaster duration={50000} />
+        <Toaster duration={5000} />
         {/* 开发调试工具：如需启用，请在开发环境下渲染下方组件 */}
         {/* {import.meta.env.MODE === 'development' && (
           <>
