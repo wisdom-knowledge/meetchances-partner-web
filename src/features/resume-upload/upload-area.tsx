@@ -156,9 +156,6 @@ export function UploadArea({ onUploadComplete }: UploadAreaProps) {
                       <p className="text-sm font-medium truncate">{file.name}</p>
                       <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
                     </div>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <X className="h-4 w-4" />
-                    </Button>
                   </div>
                 ))}
               </div>
