@@ -1,6 +1,6 @@
 import { FileIcon, Upload, AlertTriangle, CheckCircle2 } from 'lucide-react'
-import { motion, useAnimation } from 'framer-motion'
-import { useEffect, useRef } from 'react'
+import { motion } from 'framer-motion'
+import { useRef } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -138,19 +138,19 @@ export default function UploadCard({
             >
               {isError ? (
                 <>
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" />
                   <span className="text-destructive">{errorMsg || statusTextMap[status_code]}</span>
                 </>
               ) : status_code === UploadCardStatusCode.Success ? (
                 <>
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
                   <span>{statusTextMap[status_code]}</span>
                 </>
               ) : status_code === UploadCardStatusCode.Uploading ? (
                 <UploadingTicker minutes={parseMinutes} />
               ) : (
                 <>
-                  <Upload className="h-4 w-4 text-primary" />
+                  <Upload className="h-4 w-4 shrink-0 text-primary" />
                   <span>{statusTextMap[status_code]}</span>
                 </>
               )}
@@ -180,36 +180,15 @@ export default function UploadCard({
 
 
 function UploadingTicker({ minutes = 5 }: { minutes?: number }) {
-  const controls = useAnimation()
-
-  useEffect(() => {
-    let isActive = true
-    let rafId = 0
-    async function loop() {
-      while (isActive) {
-        controls.set({ y: 0 })
-        await new Promise((r) => setTimeout(r, 3000))
-        await controls.start({ y: -20, transition: { duration: 0.5, ease: 'easeInOut' } })
-        await new Promise((r) => setTimeout(r, 3000))
-        await controls.start({ y: -40, transition: { duration: 0.5, ease: 'easeInOut' } })
-        controls.set({ y: 0 })
-      }
-    }
-    // 确保在组件挂载后的下一帧再启动动画
-    rafId = requestAnimationFrame(() => {
-      void loop()
-    })
-    return () => {
-      isActive = false
-      cancelAnimationFrame(rafId)
-    }
-  }, [controls])
-
   return (
     <div className="flex items-center gap-2">
-      <Upload className="h-4 w-4 text-primary" />
+      <Upload className="h-4 w-4 shrink-0 text-primary" />
       <div className="relative h-5 overflow-hidden">
-        <motion.div className="flex flex-col" animate={controls}>
+        <motion.div
+          className="flex flex-col"
+          animate={{ y: [0, -20, -40, 0] }}
+          transition={{ duration: 6, ease: 'easeInOut', times: [0, 0.33, 0.66, 1], repeat: Infinity }}
+        >
           <span className="leading-5">正在解析中</span>
           <span className="leading-5">预计需要{minutes}分钟</span>
           {/* 复制一份第一行，便于始终向上滚动 */}
