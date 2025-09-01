@@ -138,19 +138,19 @@ export default function UploadCard({
             >
               {isError ? (
                 <>
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" />
                   <span className="text-destructive">{errorMsg || statusTextMap[status_code]}</span>
                 </>
               ) : status_code === UploadCardStatusCode.Success ? (
                 <>
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
                   <span>{statusTextMap[status_code]}</span>
                 </>
               ) : status_code === UploadCardStatusCode.Uploading ? (
                 <UploadingTicker minutes={parseMinutes} />
               ) : (
                 <>
-                  <Upload className="h-4 w-4 text-primary" />
+                  <Upload className="h-4 w-4 shrink-0 text-primary" />
                   <span>{statusTextMap[status_code]}</span>
                 </>
               )}
@@ -207,7 +207,7 @@ function UploadingTicker({ minutes = 5 }: { minutes?: number }) {
 
   return (
     <div className="flex items-center gap-2">
-      <Upload className="h-4 w-4 text-primary" />
+      <Upload className="h-4 w-4 shrink-0 text-primary" />
       <div className="relative h-5 overflow-hidden">
         <motion.div className="flex flex-col" animate={controls}>
           <span className="leading-5">正在解析中</span>
