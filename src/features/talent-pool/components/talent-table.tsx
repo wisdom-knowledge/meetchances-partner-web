@@ -457,9 +457,11 @@ export default function TalentTable({ data, onFilterChange, mode = 'talentPool',
                       toast.error('提交失败')
                     }
                   }}>提交</Button>
-                  <Button onClick={handleCopyInvite} disabled={isCopying}>
-                    {isCopying ? '复制中…' : '复制邀请文案'}
-                  </Button>
+                  {jobId && (
+                    <Button onClick={handleCopyInvite} disabled={isCopying}>
+                      {isCopying ? '复制中…' : '复制邀请文案'}
+                    </Button>
+                  )}
                 </div>
               }
             />
