@@ -30,6 +30,7 @@ export interface FileItem {
 export default function ResumeUploadPage() {
   const [items, setItems] = useState<FileItem[]>([])
   const [tab, setTab] = useState<'running' | 'failed' | 'success'>('running')
+  const [tabsDisabled, setTabsDisabled] = useState(false)
   const [pageSize, setPageSize] = useState(10)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
@@ -232,7 +233,14 @@ export default function ResumeUploadPage() {
 
   // 切换 Tab 或首次加载：拉取列表并刷新计数
   useEffect(() => {
-    void handleRefresh({ refreshCounts: true })
+    setTabsDisabled(true)
+    void (async () => {
+      try {
+        await handleRefresh({ refreshCounts: true })
+      } finally {
+        setTabsDisabled(false)
+      }
+    })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab])
 
@@ -293,7 +301,16 @@ export default function ResumeUploadPage() {
             }}
           />
 
-          <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="w-full">
+          <Tabs
+            value={tab}
+            onValueChange={(v) => {
+              if (tabsDisabled) return
+              setTabsDisabled(true)
+              setTab(v as typeof tab)
+            }}
+            className="w-full"
+            disabled={tabsDisabled}
+          >
             <TabsList>
               <TabsTrigger value="running">进行中({counts.running})</TabsTrigger>
               <TabsTrigger value="failed">失败({counts.failed})</TabsTrigger>
