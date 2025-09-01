@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { Upload, FileIcon, X } from 'lucide-react'
+import { Upload, FileIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import Progress from '@/components/ui/progress'
@@ -18,18 +18,69 @@ export function UploadArea({ onUploadComplete }: UploadAreaProps) {
   const [dragOver, setDragOver] = useState(false)
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const uploadedKeysRef = useRef<Set<string>>(new Set())
   
+  const allowedExtensions = new Set(['pdf', 'doc', 'docx'])
+  const isAllowedFile = (file: File) => {
+    const name = file.name || ''
+    const ext = name.includes('.') ? name.split('.').pop()!.toLowerCase() : ''
+    if (allowedExtensions.has(ext)) return true
+    const type = file.type || ''
+    return (
+      type === 'application/pdf' ||
+      type === 'application/msword' ||
+      type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+  }
+
+  const getFileKey = (file: File) => `${file.name}__${file.size}__${file.lastModified}`
 
   const handleUpload = async (files: File[]) => {
     if (files.length === 0) return
 
+    const validFiles = files.filter(isAllowedFile)
+    const invalidCount = files.length - validFiles.length
+    if (invalidCount > 0) {
+      toast.error(`已过滤 ${invalidCount} 个不支持的文件，仅支持 PDF、DOC、DOCX`)
+    }
+    if (validFiles.length === 0) return
+
+    // 批次内去重
+    const seenThisBatch = new Set<string>()
+    let dupInBatch = 0
+    const deduped = validFiles.filter((f) => {
+      const key = getFileKey(f)
+      if (seenThisBatch.has(key)) {
+        dupInBatch += 1
+        return false
+      }
+      seenThisBatch.add(key)
+      return true
+    })
+
+    // 与历史已上传去重
+    let dupAcrossBatches = 0
+    const notUploadedYet = deduped.filter((f) => {
+      const key = getFileKey(f)
+      if (uploadedKeysRef.current.has(key)) {
+        dupAcrossBatches += 1
+        return false
+      }
+      return true
+    })
+
+    if (dupInBatch + dupAcrossBatches > 0) {
+      toast.error(`检测到 ${dupInBatch + dupAcrossBatches} 个重复文件，已跳过`)
+    }
+    if (notUploadedYet.length === 0) return
+
     setUploading(true)
-    setUploadingFiles(files)
+    setUploadingFiles(notUploadedYet)
     setProgress(0)
 
     try {
       const formData = new FormData()
-      files.forEach((file) => {
+      notUploadedYet.forEach((file) => {
         formData.append('files', file)
       })
 
@@ -51,6 +102,8 @@ export function UploadArea({ onUploadComplete }: UploadAreaProps) {
 
         toast.success(`文件已上传，正在解析中...`)
         onUploadComplete?.(results)
+        // 记录本次成功提交的文件指纹，避免后续重复上传
+        notUploadedYet.forEach((f) => uploadedKeysRef.current.add(getFileKey(f)))
       } else {
         toast.error('上传失败')
       }
@@ -61,19 +114,21 @@ export function UploadArea({ onUploadComplete }: UploadAreaProps) {
       setUploading(false)
       setUploadingFiles([])
       setProgress(0)
+      // 允许用户选择同一文件再次触发 onChange（例如重复上传检测提示）
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || [])
-    handleUpload(files)
+    void handleUpload(files)
   }
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault()
     setDragOver(false)
     const files = Array.from(event.dataTransfer.files)
-    handleUpload(files)
+    void handleUpload(files)
   }
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
@@ -130,6 +185,7 @@ export function UploadArea({ onUploadComplete }: UploadAreaProps) {
             className="hidden"
             onChange={handleFileSelect}
             disabled={uploading}
+            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             aria-label="选择文件"
             title="选择文件"
           />
