@@ -71,13 +71,15 @@ export default function JobRecommendPage() {
           </div>
         </div>
 
-        <div className='mt-6'>
-          <TalentTable
-            data={list}
-            onFilterChange={handleFilterChange}
-            mode='jobRecommend'
-            inviteContext={{ jobTitle: jobDetail?.title, salaryMin: jobDetail?.salaryRange?.[0], salaryMax: jobDetail?.salaryRange?.[1] }}
-          />
+        <div className='mt-6 flex-1 min-h-0 overflow-y-auto'>
+          <div className='pb-4'>
+            <TalentTable
+              data={list}
+              onFilterChange={handleFilterChange}
+              mode='jobRecommend'
+              inviteContext={{ jobTitle: jobDetail?.title, salaryMin: jobDetail?.salaryRange?.[0], salaryMax: jobDetail?.salaryRange?.[1] }}
+            />
+          </div>
         </div>
       </Main>
     </>
