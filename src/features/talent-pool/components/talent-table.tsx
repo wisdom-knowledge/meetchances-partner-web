@@ -118,9 +118,21 @@ export default function TalentTable({ data, onFilterChange, mode = 'talentPool',
         }))
       : []
 
-    const hardSkills = Array.isArray(self?.hard_skills)
-      ? self.hard_skills.map((s) => s?.skill_name).filter(Boolean).join('、')
-      : ''
+    const skillsFromNewField = Array.isArray(self?.skills)
+      ? (self?.skills as string[])
+      : Array.isArray(self?.hard_skills)
+        ? (self?.hard_skills as Array<{ skill_name?: string | null }>).map((s) => s?.skill_name || '').filter(Boolean)
+        : []
+
+    const skillsStr = skillsFromNewField.filter(Boolean).join('、')
+
+    const hobbiesFromNewField = Array.isArray(self?.hobbies)
+      ? (self?.hobbies as string[])
+      : Array.isArray(self?.soft_skills)
+        ? (self?.soft_skills as unknown[]).map((s) => (typeof s === 'string' ? s : (s as { skill_name?: string | null })?.skill_name || '')).filter(Boolean)
+        : []
+
+    const hobbiesStr = hobbiesFromNewField.filter(Boolean).join('、')
 
     const gender = ((): '男' | '女' | '其他' | '不愿透露' | undefined => {
       const g = basic?.gender ?? undefined
@@ -136,11 +148,16 @@ export default function TalentTable({ data, onFilterChange, mode = 'talentPool',
       email: basic?.email ?? '',
       origin: '',
       expectedSalary: '',
-      hobbies: '',
-      skills: hardSkills,
+      hobbies: hobbiesStr,
+      skills: skillsStr,
       workSkillName: '',
       workSkillLevel: undefined,
-      softSkills: '',
+      softSkills: Array.isArray(self?.soft_skills)
+        ? (self?.soft_skills as unknown[])
+            .map((s) => (typeof s === 'string' ? s : (s as { skill_name?: string | null })?.skill_name || ''))
+            .filter(Boolean)
+            .join('、')
+        : '',
       selfEvaluation: self?.summary ?? '',
       workExperience: work,
       projectExperience: projects,
