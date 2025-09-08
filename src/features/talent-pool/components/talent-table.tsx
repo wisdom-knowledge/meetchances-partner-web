@@ -118,21 +118,19 @@ export default function TalentTable({ data, onFilterChange, mode = 'talentPool',
         }))
       : []
 
-    const skillsFromNewField = Array.isArray(self?.skills)
-      ? (self?.skills as string[])
-      : Array.isArray(self?.hard_skills)
-        ? (self?.hard_skills as Array<{ skill_name?: string | null }>).map((s) => s?.skill_name || '').filter(Boolean)
-        : []
+    const skillsStr = Array.isArray(self?.hard_skills)
+      ? (self?.hard_skills as Array<{ skill_name?: string | null }>)
+          .map((s) => s?.skill_name || '')
+          .filter(Boolean)
+          .join('、')
+      : ''
 
-    const skillsStr = skillsFromNewField.filter(Boolean).join('、')
-
-    const hobbiesFromNewField = Array.isArray(self?.hobbies)
-      ? (self?.hobbies as string[])
-      : Array.isArray(self?.soft_skills)
-        ? (self?.soft_skills as unknown[]).map((s) => (typeof s === 'string' ? s : (s as { skill_name?: string | null })?.skill_name || '')).filter(Boolean)
-        : []
-
-    const hobbiesStr = hobbiesFromNewField.filter(Boolean).join('、')
+    const hobbiesStr = Array.isArray(self?.soft_skills)
+      ? (self?.soft_skills as unknown[])
+          .map((s) => (typeof s === 'string' ? s : (s as { skill_name?: string | null })?.skill_name || ''))
+          .filter(Boolean)
+          .join('、')
+      : ''
 
     const gender = ((): '男' | '女' | '其他' | '不愿透露' | undefined => {
       const g = basic?.gender ?? undefined

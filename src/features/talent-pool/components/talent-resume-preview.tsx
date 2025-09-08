@@ -63,21 +63,19 @@ function mapStructInfoToResumeValues(struct: StructInfo | undefined, fallbackNam
       }))
     : []
 
-  const skillsFromNewField = Array.isArray(self?.skills)
-    ? (self?.skills as string[])
-    : Array.isArray(self?.hard_skills)
-      ? (self?.hard_skills as Array<{ skill_name?: string | null }>).map((s) => s?.skill_name || '').filter(Boolean)
-      : []
+  const skillsStr = Array.isArray(self?.hard_skills)
+    ? (self?.hard_skills as Array<{ skill_name?: string | null }>)
+        .map((s) => s?.skill_name || '')
+        .filter(Boolean)
+        .join('、')
+    : ''
 
-  const skillsStr = skillsFromNewField.filter(Boolean).join('、')
-
-  const hobbiesFromNewField = Array.isArray(self?.hobbies)
-    ? (self?.hobbies as string[])
-    : Array.isArray(self?.soft_skills)
-      ? (self?.soft_skills as unknown[]).map((s) => (typeof s === 'string' ? s : (s as { skill_name?: string | null })?.skill_name || '')).filter(Boolean)
-      : []
-
-  const hobbiesStr = hobbiesFromNewField.filter(Boolean).join('、')
+  const hobbiesStr = Array.isArray(self?.soft_skills)
+    ? (self?.soft_skills as unknown[])
+        .map((s) => (typeof s === 'string' ? s : (s as { skill_name?: string | null })?.skill_name || ''))
+        .filter(Boolean)
+        .join('、')
+    : ''
 
   const gender = ((): '男' | '女' | '其他' | '不愿透露' | undefined => {
     const g = basic?.gender ?? undefined
@@ -212,9 +210,6 @@ export default function TalentResumePreview({ values, struct, fallbackName, edit
       self_assessment: {
         summary: v.selfEvaluation || '',
         hard_skills: hardSkills,
-        // 写入新字段：skills/hobbies，同时保留兼容旧字段
-        skills: skillTokens,
-        hobbies: combinedHobbies,
         soft_skills: combinedHobbies,
       },
     }
