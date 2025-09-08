@@ -71,7 +71,7 @@ export default function DynamicBasicForm(props: Props) {
                 )}
                 {field.component === 'tags' && (
                   <FormControl>
-                    <div className='w-full'>
+                    <div className='w-full overflow-x-auto'>
                       {/* emblor TagInput 需要 tags/setTags 与 activeTagIndex/setActiveTagIndex */}
                       <TagInput
                         placeholder={field.placeholder ?? ''}
@@ -85,7 +85,7 @@ export default function DynamicBasicForm(props: Props) {
                         setActiveTagIndex={setActiveTagIndex}
                         styleClasses={{
                           input: 'px-2 w-full border-none shadow-none focus-visible:outline-none',
-                          inlineTagsContainer: 'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]',
+                          inlineTagsContainer: 'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] flex flex-wrap overflow-x-auto',
                         }}
                       />
                     </div>

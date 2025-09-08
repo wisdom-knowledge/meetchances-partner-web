@@ -63,9 +63,21 @@ function mapStructInfoToResumeValues(struct: StructInfo | undefined, fallbackNam
       }))
     : []
 
-  const hardSkills = Array.isArray(self?.hard_skills)
-    ? self.hard_skills.map((s) => s?.skill_name).filter(Boolean).join('、')
-    : ''
+  const skillsFromNewField = Array.isArray(self?.skills)
+    ? (self?.skills as string[])
+    : Array.isArray(self?.hard_skills)
+      ? (self?.hard_skills as Array<{ skill_name?: string | null }>).map((s) => s?.skill_name || '').filter(Boolean)
+      : []
+
+  const skillsStr = skillsFromNewField.filter(Boolean).join('、')
+
+  const hobbiesFromNewField = Array.isArray(self?.hobbies)
+    ? (self?.hobbies as string[])
+    : Array.isArray(self?.soft_skills)
+      ? (self?.soft_skills as unknown[]).map((s) => (typeof s === 'string' ? s : (s as { skill_name?: string | null })?.skill_name || '')).filter(Boolean)
+      : []
+
+  const hobbiesStr = hobbiesFromNewField.filter(Boolean).join('、')
 
   const gender = ((): '男' | '女' | '其他' | '不愿透露' | undefined => {
     const g = basic?.gender ?? undefined
@@ -81,11 +93,16 @@ function mapStructInfoToResumeValues(struct: StructInfo | undefined, fallbackNam
     email: basic?.email ?? '',
     origin: '',
     expectedSalary: '',
-    hobbies: '',
-    skills: hardSkills,
+    hobbies: hobbiesStr,
+    skills: skillsStr,
     workSkillName: '',
     workSkillLevel: undefined,
-    softSkills: '',
+    softSkills: Array.isArray(self?.soft_skills)
+      ? (self?.soft_skills as unknown[])
+          .map((s) => (typeof s === 'string' ? s : (s as { skill_name?: string | null })?.skill_name || ''))
+          .filter(Boolean)
+          .join('、')
+      : '',
     selfEvaluation: self?.summary ?? '',
     workExperience: work,
     projectExperience: projects,
@@ -127,11 +144,19 @@ export default function TalentResumePreview({ values, struct, fallbackName, edit
   }, [computedValues, form])
 
   function mapFormValuesToStructInfo(v: ResumeFormValues): StructInfo {
-    const hardSkills = (v.skills || '')
+    const skillTokens = (v.skills || '')
       .split(/[,，、\n]/)
       .map((s) => s.trim())
       .filter(Boolean)
-      .map((skill) => ({ skill_name: skill, proficiency: null }))
+    const hardSkills = skillTokens.map((skill) => ({ skill_name: skill, proficiency: null }))
+
+    const tokenize = (text: string) =>
+      String(text || '')
+        .split(/[,，、\s\n]+/u)
+        .map((s) => s.trim())
+        .filter(Boolean)
+
+    const combinedHobbies = Array.from(new Set([...tokenize(v.hobbies || ''), ...tokenize(v.softSkills || '')]))
 
     return {
       basic_info: {
@@ -187,7 +212,10 @@ export default function TalentResumePreview({ values, struct, fallbackName, edit
       self_assessment: {
         summary: v.selfEvaluation || '',
         hard_skills: hardSkills,
-        soft_skills: [],
+        // 写入新字段：skills/hobbies，同时保留兼容旧字段
+        skills: skillTokens,
+        hobbies: combinedHobbies,
+        soft_skills: combinedHobbies,
       },
     }
   }
