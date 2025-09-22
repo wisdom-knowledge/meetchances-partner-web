@@ -342,13 +342,15 @@ export default function TalentTable({ data, onFilterChange, mode = 'talentPool',
       }
 
       let finalLink = link
+      const partnerSourceKey = 'partner'
       try {
         const url = new URL(link)
         url.searchParams.set('invite_token', inviteToken)
+        url.searchParams.set('_fr', partnerSourceKey)
         finalLink = url.toString()
       } catch {
         const sep = link.includes('?') ? '&' : '?'
-        finalLink = `${link}${sep}invite_token=${encodeURIComponent(inviteToken)}`
+        finalLink = `${link}${sep}invite_token=${encodeURIComponent(inviteToken)}&_fr=${partnerSourceKey}`
       }
 
       const x = inviteContext?.salaryMin != null ? String(inviteContext?.salaryMin) : ''
