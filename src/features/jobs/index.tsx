@@ -13,7 +13,7 @@ import { useJobsQuery, useJobDetailQuery } from './api'
 import { JobType } from '@/constants/explore'
 import type { Job } from '@/types/solutions'
 import { cn } from '@/lib/utils'
-import { IconArrowLeft, IconUserPlus, IconBriefcase, IconWorldPin } from '@tabler/icons-react'
+import { IconArrowLeft, IconBriefcase, IconWorldPin } from '@tabler/icons-react'
 import { Separator } from '@/components/ui/separator'
 import { useNavigate } from '@tanstack/react-router'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
@@ -80,9 +80,8 @@ export default function JobsListPage() {
                         </div>
                       </li>
                     ))
-                  : jobs.map((job: Job, index: number) => {
+                  : jobs.map((job: Job) => {
                    const isActive = selectedJob?.id === job.id
-                  const openingsCount = (index % 6) + 1
                   return (
                     <li key={job.id}>
                       <div
@@ -103,10 +102,6 @@ export default function JobsListPage() {
                              <p className='text-xs text-muted-foreground'>{job.company}</p>
                           </div>
                           <div className='flex items-center gap-2'>
-                            <Badge variant='emphasis'>
-                              <IconUserPlus className='h-3.5 w-3.5' />
-                               {openingsCount.toLocaleString('zh-CN', { style: 'currency', currency: 'CNY', maximumFractionDigits: 2 })}
-                            </Badge>
                             <Badge variant='outline'>
                               ￥{job.salaryRange?.[0] ?? 0} - ￥{job.salaryRange?.[1] ?? 0} / 小时
                             </Badge>
