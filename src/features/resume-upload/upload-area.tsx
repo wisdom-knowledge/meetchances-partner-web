@@ -37,6 +37,10 @@ export function UploadArea({ onUploadComplete }: UploadAreaProps) {
 
   const handleUpload = async (files: File[]) => {
     if (files.length === 0) return
+    if(files.length > 100) {
+      toast.error('单次最多可上传100个文件')
+      return
+    }
 
     const validFiles = files.filter(isAllowedFile)
     const invalidCount = files.length - validFiles.length
@@ -171,6 +175,7 @@ export function UploadArea({ onUploadComplete }: UploadAreaProps) {
             <div className="space-y-3">
               <h3 className="text-xl font-semibold">{dragOver ? '释放鼠标以上传' : '批量上传简历'}</h3>
               <p className="text-sm text-muted-foreground">支持拖拽或点击选择多个文件</p>
+              <p className="text-sm text-muted-foreground">单次最多可上传100个文件</p>
             </div>
 
             <Button size="lg" className="pointer-events-none" disabled={uploading}>
