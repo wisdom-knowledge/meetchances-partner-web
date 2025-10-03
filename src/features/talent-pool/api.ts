@@ -1,7 +1,7 @@
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query'
 import { z } from 'zod'
 import { api } from '@/lib/api'
-import type { TalentItem } from './components/talent-table'
+import type { TalentItem } from './types'
 
 // 枚举：与后端数值枚举对齐
 export enum RegistrationStatus {
@@ -34,6 +34,7 @@ const ResumeListItemSchema = z.object({
   talent_status: z.nativeEnum(TalentStatusCode),
   job_match_status: z.nativeEnum(JobMatchStatus).optional(),
   match_score_status: z.nativeEnum(MatchScoreStatus).optional(),
+  upload_time: z.string().optional(),
 })
 
 const ResumeListResponseSchema = z.object({
@@ -48,6 +49,7 @@ export interface TalentPoolQueryParams {
   interview_status?: number | number[] | string
   talent_status?: number | number[] | string
   name?: string
+  sort_by_upload_time?: 'asc' | 'desc'
 }
 
 export interface TalentPoolQueryResult {
@@ -63,6 +65,7 @@ function mapToTalentItem(item: z.infer<typeof ResumeListItemSchema>): TalentItem
     name: item.name,
     isRegistered,
     talentStatus,
+    uploadTime: item.upload_time,
   }
 }
 
@@ -74,7 +77,7 @@ export async function fetchTalentPool(_params: TalentPoolQueryParams = {}): Prom
     return String(v)
   }
 
-  const { skip, limit, registration_status, interview_status, talent_status, name } = _params
+  const { skip, limit, registration_status, interview_status, talent_status, name, sort_by_upload_time } = _params
   const query = {
     skip,
     limit,
@@ -82,6 +85,7 @@ export async function fetchTalentPool(_params: TalentPoolQueryParams = {}): Prom
     interview_status: toCommaParam(interview_status),
     talent_status: toCommaParam(talent_status),
     name,
+    sort_by_upload_time,
   }
 
   const raw = await api.get('/headhunter/talent_pool', { params: query })

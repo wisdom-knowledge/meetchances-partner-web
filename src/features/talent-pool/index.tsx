@@ -8,18 +8,19 @@ import { useTalentPoolQuery, type TalentPoolQueryParams } from './api'
 import { useState, useCallback } from 'react'
 
 export default function TalentPoolPage() {
-  const [serverFilters, setServerFilters] = useState<{ name?: string; registration_status?: number[]; talent_status?: number[] }>({})
+  const [serverFilters, setServerFilters] = useState<{ name?: string; registration_status?: number[]; talent_status?: number[]; sort_by_upload_time?: 'asc' | 'desc' }>({})
   const queryParams: TalentPoolQueryParams = {
     name: serverFilters.name,
     registration_status: serverFilters.registration_status,
     talent_status: serverFilters.talent_status,
+    sort_by_upload_time: serverFilters.sort_by_upload_time,
   }
   const { data } = useTalentPoolQuery(queryParams)
   const list = data?.data ?? []
   const total = data?.total ?? list.length
   const invitable = list.filter((i) => i.talentStatus === '可聘请').length
 
-  const handleFilterChange = useCallback((filters: { name?: string; registration_status?: number[]; talent_status?: number[] }) => {
+  const handleFilterChange = useCallback((filters: { name?: string; registration_status?: number[]; talent_status?: number[]; sort_by_upload_time?: 'asc' | 'desc' }) => {
     setServerFilters(filters)
   }, [])
 

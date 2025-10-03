@@ -14,6 +14,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { DataTableColumnHeader } from '@/features/users/components/data-table-column-header'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DataTablePagination } from '@/features/users/components/data-table-pagination'
@@ -21,21 +22,13 @@ import { DataTableToolbar } from '@/features/users/components/data-table-toolbar
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import TalentResumePreview from './talent-resume-preview'
 import type { StructInfo } from '@/types/struct-info'
+import type { TalentItem } from '@/features/talent-pool/types'
 import type { ResumeFormValues } from '@/features/resume/data/schema'
 import { fetchResumeDetail, updateResumeDetail } from '@/features/resume-upload/utils/api'
 import { toast } from 'sonner'
 import { generateInviteToken, InviteTokenType } from '@/features/jobs/api'
 import { useAuthStore } from '@/stores/authStore'
 import { useRouterState } from '@tanstack/react-router'
-
-export interface TalentItem {
-  resume_id?: number
-  name: string
-  isRegistered: boolean
-  talentStatus: '可聘请' | '锁定中'
-  matchScore?: number | '-'
-  interviewStatus?: number
-}
 
 declare module '@tanstack/react-table' {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -49,6 +42,7 @@ export interface ServerFilterParams {
   registration_status?: number[]
   talent_status?: number[]
   interview_status?: number[]
+  sort_by_upload_time?: 'asc' | 'desc'
 }
 
 export interface InviteContextLike {
@@ -258,6 +252,28 @@ export default function TalentTable({ data, onFilterChange, mode = 'talentPool',
     return [
       nameCol,
       {
+        accessorKey: 'uploadTime',
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title='上传时间' />
+        ),
+        cell: ({ row }) => {
+          const iso = row.original.uploadTime
+          if (!iso) return <span>-</span>
+          const d = new Date(iso)
+          if (Number.isNaN(d.getTime())) return <span>-</span>
+          // 统一标准：yyyy-MM-dd HH:mm:ss（本地时区）
+          const yyyy = d.getFullYear()
+          const mm = String(d.getMonth() + 1).padStart(2, '0')
+          const dd = String(d.getDate()).padStart(2, '0')
+          const hh = String(d.getHours()).padStart(2, '0')
+          const mi = String(d.getMinutes()).padStart(2, '0')
+          const ss = String(d.getSeconds()).padStart(2, '0')
+          const text = `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`
+          return <span>{text}</span>
+        },
+        meta: { className: 'w-[25%]' },
+      },
+      {
         accessorKey: 'status',
         header: '注册状态',
         cell: ({ row }) => (
@@ -402,8 +418,12 @@ export default function TalentTable({ data, onFilterChange, mode = 'talentPool',
       ? interviewFilterRaw.map((v) => interviewMap[v]).filter((v) => v !== undefined)
       : undefined
 
-    onFilterChange({ name, registration_status, talent_status, interview_status })
-  }, [columnFilters, onFilterChange])
+    // 排序：仅将 uploadTime 的排序映射到服务端
+    const sort = sorting.find((s) => s.id === 'uploadTime')
+    const sort_by_upload_time: 'asc' | 'desc' | undefined = sort ? (sort.desc ? 'desc' : 'asc') : undefined
+
+    onFilterChange({ name, registration_status, talent_status, interview_status, sort_by_upload_time })
+  }, [columnFilters, sorting, onFilterChange])
 
   return (
     <div className='space-y-4'>
