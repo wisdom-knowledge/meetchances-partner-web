@@ -1,7 +1,7 @@
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query'
 import { z } from 'zod'
 import { api } from '@/lib/api'
-import type { TalentItem } from '@/features/talent-pool/components/talent-table'
+import type { TalentItem } from '@/features/talent-pool/types'
 
 export enum RegistrationStatus {
   UNREGISTERED = 0,
