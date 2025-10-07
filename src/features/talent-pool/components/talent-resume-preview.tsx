@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form'
+import { useForm, type Resolver } from 'react-hook-form'
 import { useEffect, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -134,18 +134,21 @@ export default function TalentResumePreview({ values, struct, fallbackName, edit
     )
   }, [struct, values, fallbackName])
 
-  const form = useForm<ResumeFormValues>({ resolver: zodResolver(resumeSchema), defaultValues: computedValues, mode: 'onChange' })
+  const form = useForm<ResumeFormValues>({ resolver: zodResolver(resumeSchema) as Resolver<ResumeFormValues>, defaultValues: computedValues, mode: 'onChange' })
 
-  // 暴露校验方法给父组件（通过 window 事件总线，避免破坏现有 props 结构）
+  // 暴露校验方法给父组件（通过 window 自定义事件）
   useEffect(() => {
-    const handler = async (e: CustomEvent<{ resolve: (ok: boolean) => void }>) => {
-      const ok = await form.trigger()
-      e.detail.resolve(ok)
+    type ValidateDetail = { resolve: (ok: boolean) => void }
+    const EVENT_NAME = 'talent-resume-preview:validate'
+    const handler = (evt: Event) => {
+      const e = evt as CustomEvent<ValidateDetail>
+      Promise.resolve(form.trigger()).then((ok) => {
+        e.detail?.resolve(ok)
+      })
     }
-    // 自定义事件名：talent-resume-preview:validate
-    window.addEventListener('talent-resume-preview:validate' as any, handler as EventListener)
+    window.addEventListener(EVENT_NAME, handler as EventListener)
     return () => {
-      window.removeEventListener('talent-resume-preview:validate' as any, handler as EventListener)
+      window.removeEventListener(EVENT_NAME, handler as EventListener)
     }
   }, [form])
 

@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, type SubmitHandler, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
@@ -27,7 +27,7 @@ export default function ResumePage() {
   const defaultGender = undefined
 
   const form = useForm<ResumeFormValues>({
-    resolver: zodResolver(resumeSchema),
+    resolver: zodResolver(resumeSchema) as Resolver<ResumeFormValues>,
     defaultValues: {
       name: '',
       phone: '',
@@ -108,7 +108,7 @@ export default function ResumePage() {
 
   // experiences 由动态组件内部管理；此处不需要声明
 
-  function onSubmit(values: ResumeFormValues) {
+  const onSubmit: SubmitHandler<ResumeFormValues> = (values) => {
     showSubmittedData(values)
   }
 
