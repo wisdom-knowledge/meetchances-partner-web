@@ -136,6 +136,19 @@ export default function TalentResumePreview({ values, struct, fallbackName, edit
 
   const form = useForm<ResumeFormValues>({ resolver: zodResolver(resumeSchema), defaultValues: computedValues, mode: 'onChange' })
 
+  // 暴露校验方法给父组件（通过 window 事件总线，避免破坏现有 props 结构）
+  useEffect(() => {
+    const handler = async (e: CustomEvent<{ resolve: (ok: boolean) => void }>) => {
+      const ok = await form.trigger()
+      e.detail.resolve(ok)
+    }
+    // 自定义事件名：talent-resume-preview:validate
+    window.addEventListener('talent-resume-preview:validate' as any, handler as EventListener)
+    return () => {
+      window.removeEventListener('talent-resume-preview:validate' as any, handler as EventListener)
+    }
+  }, [form])
+
   // 当外部传入内容变化时，重置表单，避免保留上一次的内容
   useEffect(() => {
     form.reset(computedValues)

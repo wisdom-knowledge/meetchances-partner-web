@@ -402,6 +402,12 @@ export default function ResumeUploadPage() {
                 <div className='flex gap-2 justify-end'>
                   <Button variant='outline' onClick={() => setResumeOpen(false)}>关闭</Button>
                   <Button onClick={async () => {
+                    // 先触发表单校验（复用人才库预览的事件）
+                    const isValid = await new Promise<boolean>((resolve) => {
+                      const ev = new CustomEvent('talent-resume-preview:validate', { detail: { resolve } }) as Event
+                      window.dispatchEvent(ev)
+                    })
+                    if (!isValid) return
                     if (!currentResumeId) {
                       setResumeOpen(false)
                       setResumeValues(null)
@@ -409,8 +415,8 @@ export default function ResumeUploadPage() {
                       return
                     }
                     const payload = editedStruct ?? resumeStruct ?? ({} as StructInfo)
-                    const ok = await updateResumeDetail(currentResumeId, payload)
-                    if (ok.success) {
+                    const result = await updateResumeDetail(currentResumeId, payload)
+                    if (result.success) {
                       await handleRefresh({ refreshCounts: true })
                     }
                     setResumeOpen(false)

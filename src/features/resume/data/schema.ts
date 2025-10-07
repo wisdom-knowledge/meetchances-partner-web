@@ -3,8 +3,32 @@ import { z } from 'zod'
 export const resumeSchema = z.object({
   name: z.string().optional(),
   gender: z.enum(['男', '女', '其他', '不愿透露']).optional(),
-  phone: z.string().optional(),
-  email: z.string().email('请输入有效邮箱地址').optional().or(z.literal('')),
+  phone: z.preprocess(
+    (v) => (v == null ? '' : (typeof v === 'string' ? v.trim() : v)),
+    z
+      .string()
+      .min(1, '电话为必填项')
+      .refine((val) => {
+        // 优先匹配中国大陆手机号；其次匹配座机（区号+本地号，可选分机）；否则回退为 E.164（7–15 位数字）
+        const normalized = val.trim()
+        const cnMobile = /^1[3-9]\d{9}$/
+        if (cnMobile.test(normalized)) return true
+        const landline = /^0\d{2,3}-?\d{7,8}(?:-\d{1,4})?$/
+        if (landline.test(normalized)) return true
+        // 禁止包含字母等非法字符，仅允许 + 数字 空格 - ()
+        if (/[A-Za-z]/.test(normalized)) return false
+        if (!/^[+\d\s()-]+$/.test(normalized)) return false
+        const digits = normalized.replace(/\D/g, '')
+        return digits.length >= 7 && digits.length <= 15
+      }, '请输入有效电话号码')
+  ),
+  email: z.preprocess(
+    (v) => (v == null ? '' : (typeof v === 'string' ? v.trim() : v)),
+    z
+      .string()
+      .min(1, '邮箱为必填项')
+      .email('请输入有效邮箱地址')
+  ),
   city: z.string().optional(),
   origin: z.string().optional(),
   expectedSalary: z.string().optional(),

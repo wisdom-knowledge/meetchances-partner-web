@@ -479,14 +479,23 @@ export default function TalentTable({ data, onFilterChange, mode = 'talentPool',
                 <div className='flex gap-2 justify-start'>
                   <Button variant='outline' onClick={() => setResumeOpen(false)}>关闭</Button>
                   <Button onClick={async () => {
+                    // 先触发表单校验（通过自定义事件请求子组件执行 trigger）
+                    const isValid = await new Promise<boolean>((resolve) => {
+                      const ev = new CustomEvent('talent-resume-preview:validate', { detail: { resolve } }) as Event
+                      window.dispatchEvent(ev)
+                    })
+                    if (!isValid) {
+                      toast.error('请完善必填信息后再提交')
+                      return
+                    }
                     const resumeId = current?.resume_id
                     if (!resumeId) {
                       toast.error('缺少简历ID，无法提交')
                       return
                     }
                     const payload = editedStruct ?? ({} as StructInfo)
-                    const ok = await updateResumeDetail(resumeId, payload)
-                    if (ok.success) {
+                    const result = await updateResumeDetail(resumeId, payload)
+                    if (result.success) {
                       toast.success('已提交保存')
                       setResumeOpen(false)
                       setResumeValues(null)

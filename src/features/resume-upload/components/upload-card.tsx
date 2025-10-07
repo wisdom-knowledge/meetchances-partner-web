@@ -47,6 +47,7 @@ function getRetryButtonLabel(status: UploadStatusCode, errorMsg?: string): strin
     '解析结果中缺少有效的邮箱',
     '解析结果中缺少有效的姓名',
     '解析结果中缺少有效的性别',
+    '解析结果中缺少有效的手机号和邮箱',
   ]
   if (needUpdateInfoMessages.includes(errorMsg || '')) {
     return '更新信息'
