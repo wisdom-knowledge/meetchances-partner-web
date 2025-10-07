@@ -420,12 +420,12 @@ export default function ResumeUploadPage() {
                     if (result.success) {
                       toast.success('提交成功')
                       await handleRefresh({ refreshCounts: true })
+                      setResumeOpen(false)
+                      setResumeValues(null)
+                      setResumeStruct(null)
                     } else {
-                      toast.error('提交失败')
+                      toast.error('提交失败：' + result.error)
                     }
-                    setResumeOpen(false)
-                    setResumeValues(null)
-                    setResumeStruct(null)
                   }}>提交</Button>
                 </div>
               }

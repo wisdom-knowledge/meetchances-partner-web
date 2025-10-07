@@ -35,7 +35,7 @@ api.interceptors.response.use(
       if (status >= 200 && status < 300) {
         return payload
       }
-      return Promise.reject({ status_code: status, status_msg: 'Request failed' })
+      return Promise.reject({ status_code: status, status_msg: payload.detail || 'Request failed' })
     }
 
     const { status_code, status_msg, data } = payload as {

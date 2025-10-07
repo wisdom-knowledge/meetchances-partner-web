@@ -183,12 +183,12 @@ export function useUploadResumesMutation(
 
 
 // 更新简历详情：PATCH /api/v1/headhunter/resume_detail/{resume_id}
-export async function updateResumeDetail(resumeId: number, structInfo: StructInfo | Record<string, never>): Promise<{ success: boolean }> {
+export async function updateResumeDetail(resumeId: number, structInfo: StructInfo | Record<string, never>): Promise<{ success: boolean, error?: string }> {
   try {
     await api.patch(`/headhunter/resume_detail/${resumeId}`, { struct_info: structInfo })
     return { success: true }
   } catch (_e) {
-    return { success: false }
+    return { success: false, error: (_e as { status_msg: string }).status_msg }
   }
 }
 
