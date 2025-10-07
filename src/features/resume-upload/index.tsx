@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import TalentResumePreview from '@/features/talent-pool/components/talent-resume-preview'
 import type { ResumeFormValues } from '@/features/resume/data/schema'
 import type { StructInfo } from '@/types/struct-info'
+import { toast } from 'sonner'
 
 export interface FileItem {
   id: string
@@ -417,7 +418,10 @@ export default function ResumeUploadPage() {
                     const payload = editedStruct ?? resumeStruct ?? ({} as StructInfo)
                     const result = await updateResumeDetail(currentResumeId, payload)
                     if (result.success) {
+                      toast.success('提交成功')
                       await handleRefresh({ refreshCounts: true })
+                    } else {
+                      toast.error('提交失败')
                     }
                     setResumeOpen(false)
                     setResumeValues(null)
